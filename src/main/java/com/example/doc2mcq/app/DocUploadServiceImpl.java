@@ -27,27 +27,8 @@ public class DocUploadServiceImpl implements DocUploadService {
             XWPFDocument docx = new XWPFDocument(new FileInputStream("C:\\projects\\upload\\upload_"+file.getOriginalFilename()));
             XWPFWordExtractor we =new XWPFWordExtractor(docx);
             System.out.println("THIS IS DATA======= "+we.getText());
-            //String string = "name, city, age \n john, chicago, 22 \n gary, florida, 35 \n";
-            JSONArray result = CDL.toJSONArray("question,options\n"+we.getText());
+            JSONArray result = CDL.toJSONArray("question, options, answer \n"+we.getText());
             System.out.println(result);
-
-            /*System.out.println(string);
-            JSONArray result2 = CDL.toJSONArray(string);
-            System.out.println(result2);*/
-
-
-            /*JSONObject obj = new JSONObject();
-            obj.put("Subject",we.getText() );
-            System.out.println(obj);*/
-            /*JSONArray arr = new JSONArray();
-
-
-            JSONObject obj = new JSONObject();
-            obj.put("Subject", "Maths");
-            obj.put("Marks", "10");
-            obj.put("Date", "20-10-2021");
-
-            System.out.println(obj);*/
         } catch (Exception e){
             System.out.println(e);
         }
