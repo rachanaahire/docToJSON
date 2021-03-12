@@ -24,36 +24,43 @@ public class DocUploadServiceImpl implements DocUploadService {
             Files.write(path, data);
             XWPFDocument docx = new XWPFDocument(new FileInputStream("C:\\projects\\upload\\upload_"+file.getOriginalFilename()));
 
-            /////////HEADER WORD DOC
+            // Fetch DOC HEADER Data
             List<XWPFHeader> headerList = docx.getHeaderList();
             JSONObject myObj = new JSONObject();
             for (XWPFHeader xwpfHeader : headerList) {
-
                 String str = xwpfHeader.getText();
-                String[] strArr = str.split("\\n");
-                myObj.put("subject",strArr[0]);
-                myObj.put("marks",strArr[1]);
-                myObj.put("date",strArr[2]);
+                String[] strArr = str.split("Subject:|\\nMarks:|\\nDate:|\\n");
+                myObj.put("subject",strArr[1].trim());
+                myObj.put("marks",strArr[2].trim());
+                myObj.put("date",strArr[3].trim());
             }
 
-            ////// BODY DOC
+            // Fetch DOC BODY Data
             List<IBodyElement> bodyElements = docx.getBodyElements();
             JSONArray myArrObj = new JSONArray();
-            JSONObject demo = new JSONObject();
             for (IBodyElement bodyElement : bodyElements) {
                 if (bodyElement instanceof XWPFTable) {
                     XWPFTable table = (XWPFTable) bodyElement;
                     List<XWPFTableRow> rows = table.getRows();
                     for (XWPFTableRow row : rows) {
-                        demo.put("string",row.getCell(2).getText());
+                        //options Object
+                        String str = row.getCell(2).getText();
+                        String[] strArr = str.split("\\([A-D]\\)");
+                        JSONObject optObj = new JSONObject();
+                        optObj.put("A",strArr[1].trim());
+                        optObj.put("B",strArr[2].trim());
+                        optObj.put("C",strArr[3].trim());
+                        optObj.put("D",strArr[4].trim());
+
+                        //mcq ArrayObject
                         JSONObject obj = new JSONObject();
                         obj.put("quesNo",row.getCell(0).getText());
                         obj.put("question",row.getCell(1).getText());
-                        obj.put("options",row.getCell(2).getText());
+                        obj.put("options",optObj);
                         obj.put("answer",row.getCell(3).getText());
                         myArrObj.put(obj);
                     }
-                    myObj.put("data",myArrObj);
+                    myObj.put("mcq",myArrObj);
                     System.out.println(myObj);
                 }
             }
