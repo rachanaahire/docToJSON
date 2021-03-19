@@ -24,7 +24,7 @@ import static java.lang.Integer.parseInt;
 public class DocUploadServiceImpl implements DocUploadService {
 
     @Override
-    public void uploadToLocal(MultipartFile file) throws IOException {
+    public String uploadToLocal(MultipartFile file) throws IOException {
         try{
             byte[] data = file.getBytes();
             Path path = Paths.get("C:\\projects\\upload\\upload_" + file.getOriginalFilename());
@@ -88,7 +88,7 @@ public class DocUploadServiceImpl implements DocUploadService {
                     myObj.put("mcq",myArrObj);
                     System.out.println(myObj);
                 }
-            }
+            } return JSONObject.valueToString(myObj);
         } catch (Exception e){
             throw new IOException("Document Failed to Load");
         }
@@ -112,4 +112,5 @@ public class DocUploadServiceImpl implements DocUploadService {
         }
         return doc.toString();
     }
+
 }

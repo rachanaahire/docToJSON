@@ -22,7 +22,7 @@ public class DocUploadController {
     };
 
     @PostMapping("/upload")
-    public void uploadLocal(@RequestParam("file") MultipartFile file) throws IOException {
-        docUploadService.uploadToLocal(file);
+    public String uploadLocal(@RequestParam("file") MultipartFile file) throws IOException {
+        return docUploadService.uploadToLocal(file);
     }
 }
