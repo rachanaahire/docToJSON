@@ -9,10 +9,10 @@ import java.io.IOException;
 @RestController
 @RequestMapping(path ="/api")
 public class DocUploadController {
-    private final DocUploadService docUploadService;
+    private final DocUploadServiceImpl docUploadService;
 
     @Autowired
-    public DocUploadController(DocUploadService docUploadService) {
+    public DocUploadController(DocUploadServiceImpl docUploadService) {
         this.docUploadService = docUploadService;
     }
 
