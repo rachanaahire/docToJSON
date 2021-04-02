@@ -34,9 +34,9 @@ public class DocUploadServiceImpl {
     public String uploadToLocal(MultipartFile file) throws IOException {
         try{
             byte[] data = file.getBytes();
-            Path path = Paths.get("C:\\projects\\upload\\upload_" + file.getOriginalFilename());
+            Path path = Paths.get("sampleDocs\\uploads\\upload_" + file.getOriginalFilename());
             Files.write(path, data);
-            XWPFDocument docx = new XWPFDocument(new FileInputStream("C:\\projects\\upload\\upload_"+file.getOriginalFilename()));
+            XWPFDocument docx = new XWPFDocument(new FileInputStream("sampleDocs\\uploads\\upload_"+file.getOriginalFilename()));
 
             // Fetch DOC HEADER Data
             List<XWPFHeader> headerList = docx.getHeaderList();
@@ -114,7 +114,7 @@ public class DocUploadServiceImpl {
 
             //creating a sample HTML file
             String encoding = "UTF-8";
-            FileOutputStream fos = new FileOutputStream("C:\\projects\\upload\\result333.html");
+            FileOutputStream fos = new FileOutputStream("sampleDocs\\result.html");
             OutputStreamWriter writer = new OutputStreamWriter(fos, encoding);
             writer.write("<!DOCTYPE html>\n");
             writer.write("<html lang=\"en\">");
