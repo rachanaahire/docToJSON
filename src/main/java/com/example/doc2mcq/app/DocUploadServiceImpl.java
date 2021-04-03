@@ -61,10 +61,33 @@ public class DocUploadServiceImpl {
                         allHTML.append("<tr>");
                         for (XWPFTableCell cell : row.getTableCells()) {
                             allHTML.append("<td>");
-                            for (XWPFParagraph paragraph : cell.getParagraphs()) {
-                                allHTML.append("<p>");
-                                allHTML.append(getTextImagesAndFormulas(paragraph));
-                                allHTML.append("</p>");
+                            for (IBodyElement cellBodyElement : cell.getBodyElements()) {
+                                if (cellBodyElement instanceof XWPFParagraph) {
+                                    XWPFParagraph paragraph = (XWPFParagraph)cellBodyElement;
+                                    allHTML.append("<p>");
+                                    allHTML.append(getTextImagesAndFormulas(paragraph));
+                                    allHTML.append("</p>");
+                                }
+                                else if (cellBodyElement instanceof XWPFTable) {
+                                    XWPFTable table3 = (XWPFTable)cellBodyElement;
+                                    allHTML.append("<table border=\"1px solid black\">");
+                                    for (XWPFTableRow row3 : table3.getRows()) {
+                                        allHTML.append("<tr>");
+                                        for (XWPFTableCell cell3 : row3.getTableCells()) {
+                                            allHTML.append("<td>");
+                                            for (XWPFParagraph paragraph3 : cell3.getParagraphs()) {
+                                                allHTML.append("<p>");
+                                                allHTML.append(getTextImagesAndFormulas(paragraph3));
+                                                allHTML.append("</p>");
+                                            }
+                                            allHTML.append("</td>");
+                                        }
+                                        allHTML.append("</tr>");
+                                    }
+                                    allHTML.append("</table>");
+                                } else {
+                                    break;
+                                }
                             }
                             allHTML.append("</td>");
                         }
@@ -200,6 +223,7 @@ public class DocUploadServiceImpl {
         while (xmlcursor.hasNextToken()) {
             XmlCursor.TokenType tokentype = xmlcursor.toNextToken();
             if (tokentype.isStart()) {
+                //System.out.println(xmlcursor.getObject());
                 if (xmlcursor.getName().getPrefix().equalsIgnoreCase("w") && xmlcursor.getName().getLocalPart().equalsIgnoreCase("r")) {
                     //elements w:r are text runs within the paragraph
                     //append text data
