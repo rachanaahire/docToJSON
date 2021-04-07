@@ -16,11 +16,6 @@ public class DocUploadController {
         this.docUploadService = docUploadService;
     }
 
-    @GetMapping
-    public String helloWorld() {
-        return "Hello";
-    };
-
     @PostMapping("/upload")
     public String uploadLocal(@RequestParam("file") MultipartFile file) throws IOException {
         return docUploadService.uploadToLocal(file);

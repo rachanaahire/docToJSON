@@ -184,7 +184,7 @@ public class DocUploadServiceImpl {
         return doc.toString();
     }
 
-    //method for getting MathML from oMath
+    //method for getting MathML from oMathML
     static String getMathML(CTOMath ctomath) throws Exception {
         //MATHML CODE
         File stylesheet = new File("OMML2MML.XSL");
@@ -212,18 +212,15 @@ public class DocUploadServiceImpl {
     }
 
 
-    //method for getting HTML including MathML from XWPFParagraph
+    //method for getting HTML including MathML, Images and Table from cell (XWPFParagraph)
     static String getTextImagesAndFormulas(XWPFParagraph paragraph) throws Exception {
-
         StringBuffer cellData = new StringBuffer();
 
         //using a cursor to go through the paragraph from top to down
         XmlCursor xmlcursor = paragraph.getCTP().newCursor();
-
         while (xmlcursor.hasNextToken()) {
             XmlCursor.TokenType tokentype = xmlcursor.toNextToken();
             if (tokentype.isStart()) {
-                //System.out.println(xmlcursor.getObject());
                 if (xmlcursor.getName().getPrefix().equalsIgnoreCase("w") && xmlcursor.getName().getLocalPart().equalsIgnoreCase("r")) {
                     //elements w:r are text runs within the paragraph
                     //append text data
@@ -233,7 +230,6 @@ public class DocUploadServiceImpl {
                     cellData.append(getMathML((CTOMath)xmlcursor.getObject()));
                 } else if (xmlcursor.getName().getLocalPart().equalsIgnoreCase("pic")) {
                     //append image element
-                    //System.out.println(xmlcursor.getObject());
                     String filename = CTPicture.Factory.parse(xmlcursor.getDomNode().getFirstChild()).getNvPicPr().getCNvPr().getName();
                     String width = EmuToPixels((int) CTPicture.Factory.parse(xmlcursor.getDomNode().getLastChild()).getSpPr().getXfrm().getExt().getCx())+"pt";
                     String height = EmuToPixels((int) CTPicture.Factory.parse(xmlcursor.getDomNode().getLastChild()).getSpPr().getXfrm().getExt().getCy())+"pt";
