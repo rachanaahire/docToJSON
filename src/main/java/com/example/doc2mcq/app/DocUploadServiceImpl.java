@@ -25,8 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-
-import static java.lang.Integer.parseInt;
+import java.util.regex.Pattern;
 
 @Service
 public class DocUploadServiceImpl {
@@ -37,17 +36,6 @@ public class DocUploadServiceImpl {
             Path path = Paths.get("sampleDocs\\uploads\\upload_" + file.getOriginalFilename());
             Files.write(path, data);
             XWPFDocument docx = new XWPFDocument(new FileInputStream("sampleDocs\\uploads\\upload_"+file.getOriginalFilename()));
-
-            // Fetch DOC HEADER Data
-            List<XWPFHeader> headerList = docx.getHeaderList();
-            JSONObject myObj = new JSONObject();
-            for (XWPFHeader xwpfHeader : headerList) {
-                String str = xwpfHeader.getText();
-                String[] strArr = str.split("Subject:|\\nMarks:|\\nDate:|\\n");
-                myObj.put("subject",strArr[1].trim());
-                myObj.put("marks",strArr[2].trim());
-                myObj.put("date",strArr[3].trim());
-            }
 
             //using a StringBuffer for appending all the content as HTML
             StringBuffer allHTML = new StringBuffer();
@@ -97,41 +85,52 @@ public class DocUploadServiceImpl {
                 }
             }
 
-            //MERGE Base64 IMAGES
+            //convert images to base64
             List<XWPFPictureData> list = docx.getAllPictures();
             String finalHTML = allHTML.toString();
             finalHTML = setImg(finalHTML, list);
 
-            Document doc2 = Jsoup.parse(finalHTML);
-            Element table2 = doc2.select("table").get(0);
-            Elements rows2 = table2.select("tr");
+            //create JSON object
+            JSONObject myObj = new JSONObject();
+            JSONArray sectionArr = new JSONArray();
+            JSONArray questionArr = new JSONArray();
+            Document doc = Jsoup.parse(finalHTML);
+            Elements tables = doc.select("table");
 
-            // Fetch DOC BODY Data
-            JSONArray myArrObj = new JSONArray();
-            for (IBodyElement bodyElement : docx.getBodyElements()) {
-                if (bodyElement instanceof XWPFTable) {
-                    XWPFTable table = (XWPFTable) bodyElement;
-                    for (XWPFTableRow row : table.getRows()) {
-                        //mcq ArrayObject
+            int tableNo= 0;
+            for (IBodyElement bodyElement: docx.getBodyElements()){
+                if (bodyElement instanceof XWPFTable){
+                    XWPFTable tableBody = (XWPFTable)bodyElement;
+                    Element table = tables.get(tableNo++);
+                    String cell1Text = table.selectFirst("tr").selectFirst("td").text();
+                    if (cell1Text.equalsIgnoreCase("Name of The Exam:")){
+                        for (XWPFTableRow rowBody : tableBody.getRows()){
+                            myObj.put(rowBody.getCell(0).getText().replaceAll("\\s", ""),rowBody.getCell(1).getText().trim());
+                        }
+                    } else if (cell1Text.equalsIgnoreCase("Section Number")){
                         JSONObject obj = new JSONObject();
-                        obj.put("quesNo",row.getCell(0).getText());
-                        obj.put("answer",row.getCell(3).getText());
-
-                        //questionCell object
-                        int i = parseInt(row.getCell(0).getText())-1;
-                        Element row2 = rows2.get(i);
-                        String str2 = row2.select("td:eq(1)").toString();
-                        obj.put("questionCell",str2);
-
-                        //options Object
-                        int j = parseInt(row.getCell(0).getText())-1;
-                        Element row3 = rows2.get(j);
-                        String str3 = row3.select("td:eq(2)").toString();
-                        obj.put("optionsCell",str3);
-
-                        myArrObj.put(obj);
+                        for (XWPFTableRow rowBody : tableBody.getRows()){
+                            obj.put(rowBody.getCell(0).getText().replaceAll("\\s", ""),rowBody.getCell(1).getText().trim());
+                        }
+                        sectionArr.put(obj);
+                        myObj.put("Sections",sectionArr);
+                    } else if (cell1Text.equalsIgnoreCase("Question Number")){
+                        int rowIndex = 0;
+                        JSONObject obj = new JSONObject();
+                        for (XWPFTableRow rowBody : tableBody.getRows()){
+                            Pattern regex = Pattern.compile("Option[1-4]",Pattern.CASE_INSENSITIVE);
+                            String cell = rowBody.getCell(0).getText().replaceAll("\\s", "");
+                            if (regex.matcher(cell).matches() || cell.equalsIgnoreCase("ActualQuestion")) {
+                                String value = (table.select("tr").get(rowIndex++).select("td:eq(1)")).toString();
+                                obj.put(rowBody.getCell(0).getText().replaceAll("\\s", ""), value);
+                            } else {
+                                rowIndex++;
+                                obj.put(rowBody.getCell(0).getText().replaceAll("\\s", ""), rowBody.getCell(1).getText().trim());
+                            }
+                        }
+                        questionArr.put(obj);
+                        myObj.put("Questions",questionArr);
                     }
-                    myObj.put("mcq",myArrObj);
                 }
             }
 
@@ -161,6 +160,7 @@ public class DocUploadServiceImpl {
 
             return JSONObject.valueToString(myObj);
         } catch (Exception e){
+            System.out.println(e);
             throw new IOException("Document Failed to Load");
         }
     }
@@ -236,7 +236,7 @@ public class DocUploadServiceImpl {
                     cellData.append("<img src="+filename+" width="+width+" height="+height+" />");
                 }
             } else if (tokentype.isEnd()) {
-                //we have to check whether we are at the end of the paragraph
+                //to check whether we are at the end of the paragraph
                 xmlcursor.push();
                 xmlcursor.toParent();
                 if (xmlcursor.getName().getLocalPart().equalsIgnoreCase("p")) {
